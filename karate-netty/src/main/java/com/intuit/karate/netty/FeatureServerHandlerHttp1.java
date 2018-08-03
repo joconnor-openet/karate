@@ -55,18 +55,19 @@ import java.util.Map;
  *
  * @author pthomas3
  */
-public class FeatureServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
+public class FeatureServerHandlerHttp1 extends SimpleChannelInboundHandler<FullHttpRequest> {
 
     private final FeatureProvider provider;
     private final Runnable stopFunction;
 
-    public FeatureServerHandler(FeatureProvider provider, Runnable stopFunction) {
+    public FeatureServerHandlerHttp1(FeatureProvider provider, Runnable stopFunction) {
         this.provider = provider;
         this.stopFunction = stopFunction;
     }
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {
+        provider.getContext().logger.debug("FeatureServerHandlerHttp1 channelReadComplete: {}", ctx);
         ctx.flush();
     }
 
