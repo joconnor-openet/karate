@@ -308,7 +308,9 @@ public class ScriptContext {
                 config.setProxyPassword((String) map.get("password"));
                 config.setNonProxyHosts(((List) ((ScriptObjectMirror) map.get("nonProxyHosts")).values()));
             }
-        } else if (key.equals("userDefined")) {
+        } else if (key.equals("httpVersion")) {
+           config.setHttpVersion(Double.valueOf(value.getAsString()));
+        }else if (key.equals("userDefined")) {
             config.setUserDefined(value.getAsMap());
         } else {
             throw new RuntimeException("unexpected 'configure' key: '" + key + "'");
