@@ -64,7 +64,10 @@ public class HttpConfig {
     private Map<String, Object> userDefined;
     private ScriptValue afterScenario = ScriptValue.NULL;
     private ScriptValue afterFeature = ScriptValue.NULL;
-    
+
+    //Http Version
+    private double httpVersion = 1.1;
+
     // report config
     private boolean logEnabled = true;
     private boolean showAllSteps = true;
@@ -105,6 +108,7 @@ public class HttpConfig {
         afterFeature = parent.afterFeature;
         logEnabled = parent.logEnabled;
         showAllSteps = parent.showAllSteps;
+        httpVersion = parent.httpVersion;
     }
 
     public boolean isSslEnabled() {
@@ -354,5 +358,12 @@ public class HttpConfig {
     public void setShowAllSteps(boolean showAllSteps) {
         this.showAllSteps = showAllSteps;
     }
-    
+
+    public double getHttpVersion() {
+        return httpVersion;
+    }
+
+    public void setHttpVersion(double httpVersion) {
+        this.httpVersion = httpVersion;
+    }
 }
