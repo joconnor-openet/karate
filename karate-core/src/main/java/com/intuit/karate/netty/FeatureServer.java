@@ -36,6 +36,7 @@ import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBehavior;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
 import io.netty.handler.ssl.ApplicationProtocolNames;
+import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -56,13 +57,20 @@ public class FeatureServer {
 
     private static final Logger logger = LoggerFactory.getLogger(FeatureServer.class);
 
+    public static FeatureServer start(File featureFile, int port, boolean ssl, Map<String, Object> vars,
+            String clientAuth) {
+        return new FeatureServer(featureFile, port, ssl, vars, clientAuth);
+    }
     public static FeatureServer start(File featureFile, int port, boolean ssl, Map<String, Object> vars) {
-        return new FeatureServer(featureFile, port, ssl, vars);
+        return start(featureFile, port, ssl, vars, "none");
     }
     
+    public static FeatureServer start(File featureFile, int port, File certFile, File privateKeyFile, Map<String, Object> vars, String clientAuth) {
+        return new FeatureServer(featureFile, port, certFile, privateKeyFile, vars, clientAuth);
+    }
     public static FeatureServer start(File featureFile, int port, File certFile, File privateKeyFile, Map<String, Object> vars) {
-        return new FeatureServer(featureFile, port, certFile, privateKeyFile, vars);
-    }    
+        return start(featureFile, port, certFile, privateKeyFile, vars, "none");
+    }
 
     private final Channel channel;
     private final String host;
@@ -90,8 +98,8 @@ public class FeatureServer {
         logger.info("stop: shutdown complete");
     }
 
-    private static SslContext getSelfSignedSslContext() {
-        try {            
+    private static SslContext getSelfSignedSslContext(String clientAuth) {
+        try {
             SelfSignedCertificate ssc = new SelfSignedCertificate();
             return SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey())
                     .sslProvider(OpenSsl.isAlpnSupported() ? SslProvider.OPENSSL : SslProvider.JDK)
@@ -103,13 +111,14 @@ public class FeatureServer {
                             SelectedListenerFailureBehavior.ACCEPT,
                             ApplicationProtocolNames.HTTP_2,
                             ApplicationProtocolNames.HTTP_1_1))
+                    .clientAuth(getClientAuth(clientAuth))
                     .build();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
     
-    private static SslContext getSslContextFromFiles(File sslCert, File sslPrivateKey) {
+    private static SslContext getSslContextFromFiles(File sslCert, File sslPrivateKey, String clientAuth) {
         try {
             if(OpenSsl.isAvailable()) {
                 if(OpenSsl.isAlpnSupported()){
@@ -133,18 +142,19 @@ public class FeatureServer {
                             SelectedListenerFailureBehavior.ACCEPT,
                             ApplicationProtocolNames.HTTP_2,
                             ApplicationProtocolNames.HTTP_1_1))
+                    .clientAuth(getClientAuth(clientAuth))
                     .build();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private FeatureServer(File featureFile, int port, File certificate, File privateKey, Map<String, Object> vars) {
-        this(featureFile, port, getSslContextFromFiles(certificate, privateKey), vars);
+    private FeatureServer(File featureFile, int port, File certificate, File privateKey, Map<String, Object> vars, String clientAuth) {
+        this(featureFile, port, getSslContextFromFiles(certificate, privateKey, clientAuth), vars);
     }
 
-    private FeatureServer(File featureFile, int port, boolean ssl, Map<String, Object> vars) {
-        this(featureFile, port, ssl ? getSelfSignedSslContext() : null, vars);
+    private FeatureServer(File featureFile, int port, boolean ssl, Map<String, Object> vars, String clientAuth) {
+        this(featureFile, port, ssl ? getSelfSignedSslContext(clientAuth) : null, vars);
     }
 
     private FeatureServer(File featureFile, int requestedPort, SslContext sslCtx, Map<String, Object> vars) {
@@ -171,5 +181,12 @@ public class FeatureServer {
             throw new RuntimeException(e);
         }
     }
-
+    private static ClientAuth getClientAuth(String clientAuthString) {
+        if (clientAuthString.equalsIgnoreCase("optional")) {
+            return ClientAuth.OPTIONAL;
+        } else if (clientAuthString.equalsIgnoreCase("require")) {
+            return ClientAuth.REQUIRE;
+        }
+        return ClientAuth.NONE;
+    }
 }

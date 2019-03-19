@@ -81,6 +81,9 @@ public class Main implements Callable<Void> {
     @Option(names = {"-k", "--key"}, description = "ssl private key (default: " + KEY_FILE + ")")
     File key;
 
+    @Option(names = {"--clientAuth"}, description = "require TLS client authentication (default: none, other possibilities \"optional\" and \"require\")")
+    String clientAuthentication = "none";
+
     @Option(names = {"-t", "--tags"}, description = "cucumber tags - e.g. '@smoke,~@ignore'")
     List<String> tags;
 
@@ -181,7 +184,7 @@ public class Main implements Callable<Void> {
             } else {
                 logger.info("ssl on, using existing files: {} and {}", CERT_FILE, KEY_FILE);
             }
-            server = FeatureServer.start(mock, port, cert, key, null);
+            server = FeatureServer.start(mock, port, cert, key, null, clientAuthentication);
         } else {
             server = FeatureServer.start(mock, port, false, null);
         }
